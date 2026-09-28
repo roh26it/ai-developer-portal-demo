@@ -798,7 +798,42 @@ const Sidebar = ({ workspace, workspaces, onWorkspaceChange, active, onNavSelect
 };
 
 /* ── App ────────────────────────────────────────────────────────────────── */
+/* Make-shift SSO gate — no real auth. "Log in with SSO" shows a spinner, then loads the app. */
+const LoginScreen = ({ onLogin }) => {
+  const [loading, setLoading] = useState(false);
+  const signIn = () => { setLoading(true); setTimeout(onLogin, 1400); };
+  return (
+    <Flex align="center" justify="center" style={{ minHeight: '100vh', fontFamily: DP.font,
+      background: `radial-gradient(1200px 600px at 50% -10%, ${DP.primarySoft} 0%, ${DP.bg} 60%)` }}>
+      <Card bordered style={{ width: 400, borderColor: DP.border, boxShadow: '0 8px 28px rgba(0,0,0,0.06)' }}
+        bodyStyle={{ padding: 32 }}>
+        <Flex vertical align="center" gap={20}>
+          <Flex align="center" gap={10}>
+            <div style={{ width: 34, height: 34, borderRadius: 8, background: DP.primary, color: '#fff',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 16 }}>A</div>
+            <Text strong style={{ fontSize: 16 }}>Acme AI Developer Portal</Text>
+          </Flex>
+          <Flex vertical align="center" gap={4} style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 18, fontWeight: 700, color: DP.text }}>Sign in to your workspace</div>
+            <div style={{ fontSize: 13, color: DP.textMuted, lineHeight: 1.5 }}>
+              Use your organization single sign-on to continue.
+            </div>
+          </Flex>
+          <Button type="primary" block size="large" loading={loading} onClick={signIn}
+            icon={loading ? null : <icons.SafetyCertificateOutlined />}>
+            {loading ? 'Signing in…' : 'Log in with SSO'}
+          </Button>
+          <Text style={{ fontSize: 11.5, color: DP.textDim, textAlign: 'center' }}>
+            Access and roles are governed in the Admin Console.
+          </Text>
+        </Flex>
+      </Card>
+    </Flex>
+  );
+};
+
 function App() {
+  const [authed, setAuthed] = useState(false);
   const [workspaceId, setWorkspaceId] = useState(WORKSPACES[0].id);
   const workspace = WORKSPACES.find(w => w.id === workspaceId);
   const [memberActive, setMemberActive] = useState('start');
@@ -832,11 +867,15 @@ function App() {
   return (
     <ConfigProvider theme={LIGHT_THEME}>
       <AntApp>
-        <Layout style={{ minHeight: '100vh', background: DP.bg, fontFamily: DP.font }}>
-          <Sidebar workspace={workspace} workspaces={WORKSPACES} onWorkspaceChange={setWorkspaceId}
-            active={active} onNavSelect={setActive} />
-          <Layout.Content style={{ padding: 24 }}>{page}</Layout.Content>
-        </Layout>
+        {!authed ? (
+          <LoginScreen onLogin={() => setAuthed(true)} />
+        ) : (
+          <Layout style={{ minHeight: '100vh', background: DP.bg, fontFamily: DP.font }}>
+            <Sidebar workspace={workspace} workspaces={WORKSPACES} onWorkspaceChange={setWorkspaceId}
+              active={active} onNavSelect={setActive} />
+            <Layout.Content style={{ padding: 24 }}>{page}</Layout.Content>
+          </Layout>
+        )}
       </AntApp>
     </ConfigProvider>
   );
